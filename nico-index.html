@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>満足度アンケート</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f8f9fa; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        h2 { margin-bottom: 20px; font-size: 1.1rem; color: #333; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 10px; }
+        .btn { width: 45px; height: 45px; border-radius: 50%; border: 1px solid #06c755; background: white; color: #06c755; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn:active { background-color: #06c755; color: white; }
+    </style>
+</head>
+<body>
+    <h2>本日の満足度は？</h2>
+    <div class="grid" id="grid"></div>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        // ★あとでここにIDを入れます
+        const MY_LIFF_ID = "PUT_YOUR_LIFF_ID_HERE"; 
+
+        const grid = document.getElementById('grid');
+        for (let i = 1; i <= 10; i++) {
+            const btn = document.createElement('div');
+            btn.className = 'btn';
+            btn.innerText = i;
+            btn.onclick = () => send(i);
+            grid.appendChild(btn);
+        }
+
+        liff.init({ liffId: MY_LIFF_ID }).catch(e => console.error(e));
+
+        function send(score) {
+            if (!liff.isLoggedIn()) { liff.login(); return; }
+            liff.sendMessages([{ type: 'text', text: `満足度：${score}` }])
+                .then(() => liff.closeWindow())
+                .catch(() => alert('エラー：アプリから開いてください'));
+        }
+    </script>
+</body>
+</html>
