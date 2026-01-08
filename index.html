@@ -5,37 +5,166 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>満足度アンケート</title>
     <style>
-        body { font-family: sans-serif; background-color: #f8f9fa; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        h2 { margin-bottom: 20px; font-size: 1.1rem; color: #333; }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 10px; }
-        .btn { width: 45px; height: 45px; border-radius: 50%; border: 1px solid #06c755; background: white; color: #06c755; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .btn:active { background-color: #06c755; color: white; }
+        /* リセットと基本設定 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Yu Gothic", YuGothic, Arial, sans-serif;
+            background-color: #f5f6f8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 15px;
+            margin: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        h2 {
+            margin: 0 0 25px 0;
+            font-size: 1.2rem;
+            color: #333;
+            text-align: center;
+            line-height: 1.4;
+        }
+        /* ボタンを縦に並べるコンテナ */
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 400px; /* スマホで見やすい最大幅 */
+        }
+        /* 横長のボタンデザイン */
+        .btn {
+            display: flex;
+            align-items: center; /* 垂直中央揃え */
+            /* justify-content: flex-start; */
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        /* タップ時のエフェクト */
+        .btn:active {
+            background-color: #eefbee; /* 薄い緑 */
+            border-color: #06c755;
+            transform: scale(0.99);
+        }
+        /* 左側の大きな数字 */
+        .num {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #06c755;
+            margin-right: 20px;
+            min-width: 40px; /* 幅を揃える */
+            text-align: center;
+        }
+        /* 右側のテキストラベル */
+        .label {
+            font-size: 1rem;
+            color: #555;
+            font-weight: 500;
+        }
+        /* 特に重要な項目の強調（オプション） */
+        .btn.high-score .label { color: #06c755; }
+        .btn.low-score .label { color: #e64a19; }
+
     </style>
 </head>
 <body>
-    <h2>本日の満足度は？</h2>
-    <div class="grid" id="grid"></div>
+    <h2>本日の診療はいかがでしたか？<br>満足度を教えてください。</h2>
+    
+    <div class="list-container" id="list"></div>
+
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
-        // ★あとでここにIDを入れます
-        const MY_LIFF_ID = "2008845147-RUqAGeU6"; 
+        // ==========================================
+        // ★ここにあなたの本物のLIFF IDを入れてください
+        // ==========================================
+        const MY_LIFF_ID = "PUT_YOUR_LIFF_ID_HERE"; 
 
-        const grid = document.getElementById('grid');
-        for (let i = 1; i <= 10; i++) {
+        // 点数に対応するラベルの定義（上から順に10, 9, ... 1）
+        const scoreLabels = {
+            10: "非常に満足",
+            9: "満足",
+            8: "良かった",
+            7: "まあまあ良かった",
+            6: "普通",
+            5: "どちらでもない",
+            4: "少し物足りない",
+            3: "不満がある",
+            2: "残念だった",
+            1: "非常に不満"
+        };
+
+        const listContainer = document.getElementById('list');
+
+        // 10から1までループしてボタンを生成（降順の方が自然なため）
+        for (let i = 10; i >= 1; i--) {
+            // 外側のボタン枠を作成
             const btn = document.createElement('div');
             btn.className = 'btn';
-            btn.innerText = i;
+            // 強調用のクラス付与（任意）
+            if (i >= 9) btn.classList.add('high-score');
+            if (i <= 2) btn.classList.add('low-score');
+            
+            // クリックイベント設定
             btn.onclick = () => send(i);
-            grid.appendChild(btn);
+
+            // 数字部分を作成
+            const numSpan = document.createElement('span');
+            numSpan.className = 'num';
+            numSpan.innerText = i;
+
+            // ラベル部分を作成
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'label';
+            // 定義したラベルを取得、なければ空文字
+            labelSpan.innerText = scoreLabels[i] || '';
+
+            // ボタンの中に数字とラベルを入れる
+            btn.appendChild(numSpan);
+            btn.appendChild(labelSpan);
+
+            // コンテナにボタンを追加
+            listContainer.appendChild(btn);
         }
 
-        liff.init({ liffId: MY_LIFF_ID }).catch(e => console.error(e));
+        // LIFF初期化処理
+        liff.init({ liffId: MY_LIFF_ID }).then(() => {
+            // ログインチェック（PCで開いた場合など）
+            if (!liff.isLoggedIn() && liff.isInClient()) {
+                liff.login();
+            }
+        }).catch(err => {
+            console.error('LIFF Initialization failed', err);
+        });
 
+        // 送信処理関数
         function send(score) {
-            if (!liff.isLoggedIn()) { liff.login(); return; }
-            liff.sendMessages([{ type: 'text', text: `満足度：${score}` }])
-                .then(() => liff.closeWindow())
-                .catch(() => alert('エラー：アプリから開いてください'));
+            // LIFFアプリ外で開かれた場合のガード
+            if (!liff.isInClient()) {
+                alert('このアンケートはLINEアプリ内でのみ回答できます。');
+                return;
+            }
+
+            const label = scoreLabels[score] || '';
+            // 送信するメッセージ内容（見やすいように加工）
+            // 例：「満足度アンケート回答：\n【10】非常に満足」
+            const messageText = `満足度アンケート回答：\n【${score}】${label}`;
+
+            liff.sendMessages([{
+                type: 'text',
+                text: messageText
+            }]).then(() => {
+                // 送信成功したら画面を閉じる
+                liff.closeWindow();
+            }).catch((err) => {
+                console.error('Send Error', err);
+                // エラーが起きた場合（権限不足など）
+                alert('送信に失敗しました。しばらく経ってから再度お試しください。');
+            });
         }
     </script>
 </body>
