@@ -80,91 +80,57 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         // ==========================================
-        // ★ここにあなたの本物のLIFF IDを入れてください
+        // ★ここにあなたの公式LINEのIDを入れてください（@も含める）
         // ==========================================
-        const MY_LIFF_ID = "2008845147-RUqAGeU6"; 
+        const LINE_ID = "@047sjzak"; 
 
-        // 点数に対応するラベルの定義（上から順に10, 9, ... 1）
+        // 点数ごとのラベル
         const scoreLabels = {
-            10: "非常に満足",
-            9: "満足",
-            8: "良かった",
-            7: "まあまあ良かった",
-            6: "普通",
-            5: "どちらでもない",
-            4: "少し物足りない",
-            3: "不満がある",
-            2: "残念だった",
-            1: "非常に不満"
+            10: "非常に満足", 9: "満足", 8: "良かった", 7: "まあまあ良かった",
+            6: "普通", 5: "どちらでもない", 4: "少し物足りない",
+            3: "不満がある", 2: "残念だった", 1: "非常に不満"
         };
 
         const listContainer = document.getElementById('list');
 
-        // 10から1までループしてボタンを生成（降順の方が自然なため）
+        // ボタン生成処理
         for (let i = 10; i >= 1; i--) {
-            // 外側のボタン枠を作成
             const btn = document.createElement('div');
             btn.className = 'btn';
-            // 強調用のクラス付与（任意）
             if (i >= 9) btn.classList.add('high-score');
             if (i <= 2) btn.classList.add('low-score');
             
-            // クリックイベント設定
+            // ★ここが変更点：クリック時の挙動
             btn.onclick = () => send(i);
 
-            // 数字部分を作成
             const numSpan = document.createElement('span');
             numSpan.className = 'num';
             numSpan.innerText = i;
-
-            // ラベル部分を作成
             const labelSpan = document.createElement('span');
             labelSpan.className = 'label';
-            // 定義したラベルを取得、なければ空文字
             labelSpan.innerText = scoreLabels[i] || '';
-
-            // ボタンの中に数字とラベルを入れる
             btn.appendChild(numSpan);
             btn.appendChild(labelSpan);
-
-            // コンテナにボタンを追加
             listContainer.appendChild(btn);
         }
 
-        // LIFF初期化処理
-        liff.init({ liffId: MY_LIFF_ID }).then(() => {
-            // ログインチェック（PCで開いた場合など）
-            if (!liff.isLoggedIn() && liff.isInClient()) {
-                liff.login();
-            }
-        }).catch(err => {
-            console.error('LIFF Initialization failed', err);
-        });
+        // LIFF初期化（ウィンドウを閉じる機能などのために一応入れておく）
+        const MY_LIFF_ID = "YOUR_LIFF_ID_HERE"; // そのままでOK
+        liff.init({ liffId: MY_LIFF_ID }).catch(err => console.error(err));
 
-        // 送信処理関数
+        // ★送信処理（ここが大きく変わります）
         function send(score) {
-            // LIFFアプリ外で開かれた場合のガード
-            if (!liff.isInClient()) {
-                alert('このアンケートはLINEアプリ内でのみ回答できます。');
-                return;
-            }
-
             const label = scoreLabels[score] || '';
-            // 送信するメッセージ内容（見やすいように加工）
-            // 例：「満足度アンケート回答：\n【10】非常に満足」
             const messageText = `満足度アンケート回答：\n【${score}】${label}`;
-
-            liff.sendMessages([{
-                type: 'text',
-                text: messageText
-            }]).then(() => {
-                // 送信成功したら画面を閉じる
-                liff.closeWindow();
-            }).catch((err) => {
-                console.error('Send Error', err);
-                // エラーが起きた場合（権限不足など）
-                alert('送信に失敗しました。しばらく経ってから再度お試しください。');
-            });
+            
+            // メッセージをエンコード（URLで使える文字に変換）
+            const encodedText = encodeURIComponent(messageText);
+            
+            // LINEのトーク画面を開き、文字を入力欄に入れるURL
+            const url = `https://line.me/R/oaMessage/${LINE_ID}/?${encodedText}`;
+            
+            // ページ遷移（これでトーク画面に戻ります）
+            location.href = url;
         }
     </script>
 </body>
